@@ -16,14 +16,15 @@ public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExcep
         }
         catch (Exception exception)
         {
-            logger.Log(_configuredLogLevel, exception, "Unhandled exception on path {Path}", context.Request.Path);
+            var safePath = SanitizeForLog(context.Request.Path);
+            logger.Log(_configuredLogLevel, exception, "Unhandled exception on path {Path}", safePath);
 
             var entry = new ExceptionLogEntry(
                 DateTime.UtcNow,
                 _configuredLogLevel.ToString(),
                 exception.Message,
                 exception.ToString(),
-                context.Request.Path,
+                safePath,
                 context.User.Identity?.Name);
 
             await exceptionLogStore.StoreAsync(entry, context.RequestAborted);
@@ -45,4 +46,7 @@ public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExcep
 
     private static LogLevel ParseLogLevel(string? value) =>
         Enum.TryParse<LogLevel>(value, true, out var result) ? result : LogLevel.Error;
+
+    private static string SanitizeForLog(string? value) =>
+        (value ?? string.Empty).Replace("\r", string.Empty).Replace("\n", string.Empty);
 }
