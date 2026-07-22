@@ -1,0 +1,6 @@
+@TradeBooks.Api_HostAddress = http://localhost:5141
+
+GET {{TradeBooks.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
