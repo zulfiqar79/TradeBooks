@@ -1,6 +1,0 @@
-@TradeBooks.AuditService_HostAddress = http://localhost:5187
-
-GET {{TradeBooks.AuditService_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
