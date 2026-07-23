@@ -11,6 +11,11 @@ public class User
     public bool IsActive { get; private set; } = true;
     public SystemRole Role { get; private set; } = SystemRole.Lector;
     public DateTime CreatedAtUtc { get; private set; } = DateTime.UtcNow;
+    public ICollection<Book> Books { get; set; } = new List<Book>();
+    public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
+    public ICollection<Exchange> RequestedExchanges { get; set; } = new List<Exchange>();
+    public ICollection<Exchange> ReceivedExchanges { get; set; } = new List<Exchange>();
+    public ICollection<Subscription> Subscriptions { get; set; } = new List<Subscription>();
 
     public void AssignRole(SystemRole role) => Role = role;
 

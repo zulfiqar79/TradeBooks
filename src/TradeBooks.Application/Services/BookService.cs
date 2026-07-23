@@ -6,13 +6,19 @@ using TradeBooks.Domain.Entities;
 
 namespace TradeBooks.Application.Services;
 
-public class BookService(IBookRepository bookRepository) : IBookService
+public class BookService(IBookRepository bookRepository, IUserRepository userRepository) : IBookService
 {
-    public async Task<BookReadDto> CreateAsync(BookCreateDto dto, CancellationToken cancellationToken = default)
+    public async Task<BookReadDto> CreateAsync(BookCreateDto dto, string authenticatedAuth0UserId, CancellationToken cancellationToken = default)
     {
+        var owner = await userRepository.GetByAuth0UserIdAsync(authenticatedAuth0UserId, cancellationToken);
+        if (owner is null)
+        {
+            throw new UnauthorizedAccessException("Authenticated user cannot publish books.");
+        }
+
         var book = new Book
         {
-            OwnerUserId = dto.OwnerUserId,
+            OwnerUserId = owner.Id,
             Title = dto.Title,
             Author = dto.Author,
             Isbn = dto.Isbn,
@@ -25,6 +31,12 @@ public class BookService(IBookRepository bookRepository) : IBookService
         await bookRepository.SaveChangesAsync(cancellationToken);
 
         return Map(created);
+    }
+
+    public async Task<BookReadDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var book = await bookRepository.GetByIdAsync(id, cancellationToken);
+        return book is null ? null : Map(book);
     }
 
     public async Task<PagedResult<BookReadDto>> SearchAsync(string? query, int pageNumber, int pageSize, CancellationToken cancellationToken = default)

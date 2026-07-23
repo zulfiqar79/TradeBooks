@@ -1,13 +1,12 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using TradeBooks.Application.Interfaces.Logging;
 
 namespace TradeBooks.Api.Middleware;
 
-public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger, IConfiguration configuration)
+public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger)
 {
-    private readonly LogLevel _configuredLogLevel = ParseLogLevel(configuration["ExceptionHandling:LogLevel"]);
-
     public async Task InvokeAsync(HttpContext context, IExceptionLogStore exceptionLogStore)
     {
         try
@@ -16,14 +15,17 @@ public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExcep
         }
         catch (Exception exception)
         {
+            var severity = IsCriticalException(exception) ? LogLevel.Critical : LogLevel.Error;
             var safePath = SanitizeForLog(context.Request.Path);
-            logger.Log(_configuredLogLevel, exception, "Unhandled exception on path {Path}", safePath);
+            var safeMessage = RedactSensitiveData(exception.Message);
+            var safeDetails = RedactSensitiveData(exception.ToString());
+            logger.Log(severity, exception, "Unhandled exception on path {Path}. Message: {Message}", safePath, safeMessage);
 
             var entry = new ExceptionLogEntry(
                 DateTime.UtcNow,
-                _configuredLogLevel.ToString(),
-                exception.Message,
-                exception.ToString(),
+                severity.ToString(),
+                safeMessage,
+                safeDetails,
                 safePath,
                 context.User.Identity?.Name);
 
@@ -44,9 +46,23 @@ public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExcep
         }
     }
 
-    private static LogLevel ParseLogLevel(string? value) =>
-        Enum.TryParse<LogLevel>(value, true, out var result) ? result : LogLevel.Error;
+    private static bool IsCriticalException(Exception exception) =>
+        exception is OutOfMemoryException or StackOverflowException or AccessViolationException or AppDomainUnloadedException;
 
     private static string SanitizeForLog(string? value) =>
         (value ?? string.Empty).Replace("\r", string.Empty).Replace("\n", string.Empty);
+
+    private static string RedactSensitiveData(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return value;
+        }
+
+        var sanitized = Regex.Replace(value, "(?i)(authorization\\s*[:=]\\s*bearer\\s+)([^\\s;,\"]+)", "$1[REDACTED]");
+        sanitized = Regex.Replace(sanitized, "(?i)(bearer\\s+)([^\\s;,\"]+)", "$1[REDACTED]");
+        sanitized = Regex.Replace(sanitized, "(?i)(password\\s*[:=]\\s*)([^\\s;,\"&]+)", "$1[REDACTED]");
+        sanitized = Regex.Replace(sanitized, "(?i)(token\\s*[:=]\\s*)([^\\s;,\"&]+)", "$1[REDACTED]");
+        return sanitized;
+    }
 }

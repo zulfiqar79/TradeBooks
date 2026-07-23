@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TradeBooks.Application.DTOs;
 using TradeBooks.Application.Interfaces.Services;
@@ -24,8 +26,11 @@ public class BooksController(IBookService bookService) : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "ReaderOnly")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CreateAsync([FromBody] BookCreateDto dto, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
@@ -33,17 +38,31 @@ public class BooksController(IBookService bookService) : ControllerBase
             return ValidationProblem(ModelState);
         }
 
-        var created = await bookService.CreateAsync(dto, cancellationToken);
+        var authenticatedAuth0UserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+        if (string.IsNullOrWhiteSpace(authenticatedAuth0UserId))
+        {
+            return Unauthorized();
+        }
+
+        BookReadDto created;
+        try
+        {
+            created = await bookService.CreateAsync(dto, authenticatedAuth0UserId, cancellationToken);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+
         return CreatedAtAction(nameof(GetByIdAsync), new { id = created.Id }, created);
     }
 
     [HttpGet("{id:int}")]
-    [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-    public IActionResult GetByIdAsync(int id) =>
-        StatusCode(StatusCodes.Status501NotImplemented, new ProblemDetails
-        {
-            Status = StatusCodes.Status501NotImplemented,
-            Title = "Not implemented",
-            Detail = "This endpoint will be completed in Phase 2."
-        });
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetByIdAsync(int id, CancellationToken cancellationToken)
+    {
+        var book = await bookService.GetByIdAsync(id, cancellationToken);
+        return book is null ? NotFound() : Ok(book);
+    }
 }

@@ -1,4 +1,6 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using TradeBooks.Api.Middleware;
 using TradeBooks.Application.Interfaces.Services;
@@ -49,6 +51,11 @@ builder.Services
     {
         options.Authority = builder.Configuration["Auth0:Authority"];
         options.Audience = builder.Configuration["Auth0:Audience"];
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            NameClaimType = ClaimTypes.NameIdentifier,
+            RoleClaimType = builder.Configuration["Auth0:RoleClaimType"] ?? ClaimTypes.Role
+        };
     });
 
 builder.Services.AddAuthorization(options =>
@@ -80,6 +87,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapHealthChecks("/api/health/live");
+app.MapHealthChecks("/api/health/live").RequireAuthorization("AdminOnly");
 
 app.Run();

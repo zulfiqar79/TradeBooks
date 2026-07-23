@@ -10,6 +10,8 @@ public class Subscription
     public DateTime StartDateUtc { get; private set; }
     public DateTime EndDateUtc { get; private set; }
     public SubscriptionStatus Status { get; private set; } = SubscriptionStatus.Pendiente;
+    public User? User { get; set; }
+    public ICollection<SubscriptionPayment> Payments { get; set; } = new List<SubscriptionPayment>();
 
     public bool Activate(DateTime startDateUtc, DateTime endDateUtc)
     {

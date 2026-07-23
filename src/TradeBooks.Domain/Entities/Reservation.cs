@@ -9,6 +9,8 @@ public class Reservation
     public int UserId { get; set; }
     public DateTime ReservedAtUtc { get; private set; } = DateTime.UtcNow;
     public ReservationStatus Status { get; private set; } = ReservationStatus.Vigente;
+    public Book? Book { get; set; }
+    public User? User { get; set; }
 
     public bool Cancel()
     {

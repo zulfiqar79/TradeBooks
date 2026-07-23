@@ -16,6 +16,9 @@ public class UserRepository(TradeBooksDbContext dbContext) : IUserRepository
     public Task<User?> GetByIdAsync(int id, CancellationToken cancellationToken = default) =>
         dbContext.Users.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
+    public Task<User?> GetByAuth0UserIdAsync(string auth0UserId, CancellationToken cancellationToken = default) =>
+        dbContext.Users.FirstOrDefaultAsync(x => x.Auth0UserId == auth0UserId, cancellationToken);
+
     public Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default) =>
         dbContext.Users.FirstOrDefaultAsync(x => x.Email == email, cancellationToken);
 

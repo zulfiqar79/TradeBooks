@@ -11,6 +11,7 @@ public class SubscriptionPayment
     public string? ExternalReference { get; set; }
     public DateTime CreatedAtUtc { get; private set; } = DateTime.UtcNow;
     public PaymentStatus Status { get; private set; } = PaymentStatus.Pendiente;
+    public Subscription? Subscription { get; set; }
 
     public bool SetStatus(PaymentStatus newStatus)
     {

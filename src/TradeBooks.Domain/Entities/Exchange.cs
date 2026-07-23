@@ -13,6 +13,10 @@ public class Exchange
     public DateTime? DecidedAtUtc { get; private set; }
     public DateTime? FinishedAtUtc { get; private set; }
     public ExchangeStatus Status { get; private set; } = ExchangeStatus.Solicitado;
+    public User? RequesterUser { get; set; }
+    public User? ReceiverUser { get; set; }
+    public Book? RequestedBook { get; set; }
+    public Book? OfferedBook { get; set; }
 
     public bool Approve()
     {

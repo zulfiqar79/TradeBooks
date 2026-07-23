@@ -4,7 +4,6 @@ using TradeBooks.Domain.Enums;
 namespace TradeBooks.Application.DTOs;
 
 public sealed record BookCreateDto(
-    [property: Range(1, int.MaxValue)] int OwnerUserId,
     [property: Required, StringLength(200)] string Title,
     [property: Required, StringLength(150)] string Author,
     [property: StringLength(40)] string? Isbn,

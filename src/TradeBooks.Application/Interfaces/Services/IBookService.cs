@@ -5,6 +5,7 @@ namespace TradeBooks.Application.Interfaces.Services;
 
 public interface IBookService
 {
-    Task<BookReadDto> CreateAsync(BookCreateDto dto, CancellationToken cancellationToken = default);
+    Task<BookReadDto> CreateAsync(BookCreateDto dto, string authenticatedAuth0UserId, CancellationToken cancellationToken = default);
+    Task<BookReadDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<PagedResult<BookReadDto>> SearchAsync(string? query, int pageNumber, int pageSize, CancellationToken cancellationToken = default);
 }

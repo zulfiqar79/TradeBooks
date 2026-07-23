@@ -15,6 +15,10 @@ public class Book
     public bool IsActive { get; private set; } = true;
     public BookStatus Status { get; private set; } = BookStatus.Disponible;
     public DateTime CreatedAtUtc { get; private set; } = DateTime.UtcNow;
+    public User? OwnerUser { get; set; }
+    public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
+    public ICollection<Exchange> RequestedInExchanges { get; set; } = new List<Exchange>();
+    public ICollection<Exchange> OfferedInExchanges { get; set; } = new List<Exchange>();
 
     public bool TryChangeStatus(BookStatus newStatus)
     {
